@@ -1,0 +1,8 @@
+faiss-cpu==1.8.0
+sentence-transformers==3.0.1
+pandas==2.2.2
+numpy==1.26.4
+psycopg2-binary==2.9.9
+streamlit==1.36.0
+matplotlib==3.9.0
+ 
