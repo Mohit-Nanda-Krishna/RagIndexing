@@ -5,7 +5,7 @@ import unittest
 import faiss
 import numpy as np
 
-from indexes.hnsw_index import HNSWIndex
+from hnsw_index import HNSWIndex
 
 
 class HNSWIndexTests(unittest.TestCase):

@@ -17,7 +17,7 @@ class HNSWIndex:
     """An L2 HNSW index backed by :class:`faiss.IndexHNSWFlat`.
 
     Vector IDs are FAISS implicit insertion positions, matching the existing
-    ``IndexFlatL2`` implementation.  FAISS returns squared L2 distances and
+    ``IndexFlatL2`` implementation. FAISS returns squared L2 distances and
     ``-1`` IDs for result slots that cannot be filled (for example, an empty
     index or ``k`` larger than the number of indexed vectors); corresponding
     distances are FAISS's maximum ``float32`` sentinel.
