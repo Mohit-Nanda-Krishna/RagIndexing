@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 from sentence_transformers import SentenceTransformer
 
-from indexes.hnsw_index import HNSWIndex
+from hnsw_index import HNSWIndex
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -39,6 +39,12 @@ def parse_arguments() -> argparse.Namespace:
         type=int,
         default=128,
         help="HNSW query candidate-list size.",
+    )
+    parser.add_argument(
+        "--index-path",
+        type=Path,
+        default=Path("indexes/hnsw.index"),
+        help="Where to save the built HNSW index.",
     )
     return parser.parse_args()
 
@@ -69,12 +75,18 @@ def main() -> None:
         efSearch=args.efSearch,
     )
     index.build(embeddings)
+    index_path = args.index_path
+    if not index_path.is_absolute():
+        index_path = project_dir / index_path
+    index_path.parent.mkdir(parents=True, exist_ok=True)
+    index.save(index_path)
 
     model = SentenceTransformer("all-MiniLM-L6-v2")
     query_embedding = model.encode([args.query]).astype(np.float32, copy=False)
     distances, indices = index.search(query_embedding, args.k)
 
     print(f"Built HNSW index with {index.ntotal} vectors of dimension {index.dimension}.")
+    print(f"Saved HNSW index to {index_path}")
     print(
         f"Parameters: M={index.M}, efConstruction={index.efConstruction}, "
         f"efSearch={index.efSearch}"
