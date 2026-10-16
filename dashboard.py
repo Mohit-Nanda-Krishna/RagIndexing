@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 
-st.set_page_config(layout="wide", page_title="Vector Index Benchmark")
+st.set_page_config(layout="wide", page_title="Vector Index Benchmark", page_icon="🗄️")
 
 ROOT = Path(__file__).resolve().parent
 SUMMARY_PATH = ROOT / "benchmark_summary.csv"
@@ -60,12 +60,18 @@ def show_overview(rows: pd.DataFrame, latency_col: str, latency_label: str) -> N
     fastest = rows.loc[rows[latency_col].idxmin()]
     smallest = rows.loc[rows["memory_mb"].idxmin()]
     quickest_build = rows.loc[rows["build_time_s"].idxmin()]
+    st.subheader("At a glance")
     cards = st.columns(4)
-    cards[0].metric("Best recall", f"{best_recall:.2f}", ", ".join(map(name, recall_winners)))
-    cards[1].metric(f"Fastest ({latency_label})", name(fastest["index_type"]), f"{fastest[latency_col]:.2f} ms", delta_color="off")
-    cards[2].metric("Smallest index", name(smallest["index_type"]), f"{smallest['memory_mb']:.2f} MB", delta_color="off")
-    cards[3].metric("Fastest build", name(quickest_build["index_type"]), f"{quickest_build['build_time_s']:.2f} s", delta_color="off")
+    cards[0].metric("Best recall", f"{best_recall:.2f}")
+    cards[0].caption(", ".join(map(name, recall_winners)))
+    cards[1].metric(f"Fastest ({latency_label})", f"{fastest[latency_col]:.2f} ms")
+    cards[1].caption(name(fastest["index_type"]))
+    cards[2].metric("Smallest index", f"{smallest['memory_mb']:.2f} MB")
+    cards[2].caption(name(smallest["index_type"]))
+    cards[3].metric("Fastest build", f"{quickest_build['build_time_s']:.3f} s")
+    cards[3].caption(name(quickest_build["index_type"]))
 
+    st.subheader("Index comparison")
     table = rows[["index_type", "avg_recall_at_k", "p50_latency_ms", "p95_latency_ms", "build_time_s", "memory_mb"]].copy()
     table["index_type"] = table["index_type"].map(name)
     table.columns = ["Index", "Recall@k", "p50 ms", "p95 ms", "Build time s", "Index size MB"]
@@ -84,6 +90,7 @@ def show_overview(rows: pd.DataFrame, latency_col: str, latency_label: str) -> N
         ))
     scatter.update_yaxes(range=[max(0, rows["avg_recall_at_k"].min() - 0.12), 1.08])
     st.plotly_chart(chart_layout(scatter, "Speed vs accuracy trade-off", f"{latency_label} latency (ms)", "Recall@k"), use_container_width=True)
+    st.caption("Larger markers represent larger index files on disk.")
 
     bars = go.Figure()
     ordered = rows.set_index("index_type").reindex([index for index in INDEXES if index in rows["index_type"].values])
@@ -151,6 +158,7 @@ def show_queries(results: pd.DataFrame, corpus_size: int, k: int) -> None:
     table["index_type"] = table["index_type"].map(name)
     table.columns = ["Index", "Latency (ms)", f"Recall@{k}"]
     st.dataframe(table.round(3), use_container_width=True, hide_index=True)
+    st.caption("✓ Passage also appears in Flat's exact top-k · ✗ Passage differs from Flat's top-k")
     flat = selected.loc[selected["index_type"].eq("flat")]
     flat_ids = set(map(str, decode_list(flat.iloc[0]["returned_ids"]))) if not flat.empty else set()
     if not flat_ids:
