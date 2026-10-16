@@ -189,14 +189,14 @@ def show_methodology(summary: pd.DataFrame, query_count: int) -> None:
     st.write(f"All indexes use the same embeddings and L2 distance. Flat provides exact top-k ground truth. The benchmark uses {query_count} test queries and corpus sizes up to {summary['corpus_size'].max():,} passages. These measurements came from one machine; absolute latency depends on hardware, so compare ratios and scaling trends. PQ uses nbits=4 where recorded in the parameters; its recall reflects that compression setting. Index size measures disk storage, not RAM.")
 
 
-def show_selector(summary: pd.DataFrame, corpus_size: int, latency_col: str) -> None:
+def show_selector(summary: pd.DataFrame, corpus_size: int, latency_metric: str) -> None:
     from selector import select_index
 
-    preset = st.selectbox("Preference", ["balanced", "speed", "accuracy", "storage"])
+    preset = st.selectbox("Preference", ["balanced", "fastest", "accurate", "smallest"])
     min_recall = st.slider("Minimum recall", 0.0, 1.0, 0.0, 0.01)
     max_latency = st.number_input("Maximum latency (ms)", min_value=0.0, value=0.0, help="0 means no limit")
     max_size = st.number_input("Maximum index size (MB)", min_value=0.0, value=0.0, help="0 means no limit")
-    result = select_index(summary, corpus_size, preset, min_recall, max_latency or None, max_size or None, latency_col)
+    result = select_index(summary, corpus_size, preset, min_recall, max_latency or None, max_size or None, latency_metric)
     if not isinstance(result, dict):
         st.write(result)
         return
@@ -270,7 +270,7 @@ def main() -> None:
         lambda: show_methodology(summary, query_count),
     ]
     if has_selector:
-        renderers.append(lambda: show_selector(summary, corpus_size, latency_col))
+        renderers.append(lambda: show_selector(summary, corpus_size, latency_label))
     for tab, label, render in zip(tabs, labels, renderers):
         with tab:
             try:
