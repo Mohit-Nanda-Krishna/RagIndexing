@@ -86,11 +86,14 @@ def show_overview(rows: pd.DataFrame, latency_col: str, latency_label: str) -> N
     st.plotly_chart(chart_layout(scatter, "Speed vs accuracy trade-off", f"{latency_label} latency (ms)", "Recall@k"), use_container_width=True)
 
     bars = go.Figure()
-    for index in INDEXES:
-        item = rows.loc[rows["index_type"].eq(index)]
-        if not item.empty:
-            bars.add_trace(go.Bar(name=name(index), x=[name(index)], y=item[latency_col], marker_color=color(index)))
-    st.plotly_chart(chart_layout(bars, f"{latency_label} latency by index", "Index", "Latency (ms)"), use_container_width=True)
+    ordered = rows.set_index("index_type").reindex([index for index in INDEXES if index in rows["index_type"].values])
+    labels = [name(index) for index in ordered.index]
+    colors = [color(index) for index in ordered.index]
+    bars.add_trace(go.Bar(name="p50", x=labels, y=ordered["p50_latency_ms"], marker_color=colors, opacity=0.55))
+    bars.add_trace(go.Bar(name="p95", x=labels, y=ordered["p95_latency_ms"], marker_color=colors))
+    chart_layout(bars, "Latency by index", "Index", "Latency (ms)")
+    bars.update_layout(barmode="group", legend_title_text="Latency percentile")
+    st.plotly_chart(bars, use_container_width=True)
 
     flat = rows.loc[rows["index_type"].eq("flat")]
     fast_ratio = flat.iloc[0][latency_col] / fastest[latency_col] if not flat.empty and fastest[latency_col] > 0 else None
