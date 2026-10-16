@@ -6,4 +6,5 @@ numpy==1.26.4
 psycopg2-binary==2.9.9
 streamlit==1.36.0
 matplotlib==3.9.0
+plotly==7.1.0
  
